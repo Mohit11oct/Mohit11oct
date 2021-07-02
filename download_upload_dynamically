@@ -1,0 +1,61 @@
+## Import all libraries
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait as wait
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.webdriver.common.by import By
+import pandas as pd
+from selenium.webdriver.support.ui import Select
+import time
+
+## Import webdriver , files
+driver=webdriver.Chrome(executable_path='Path to web driver')
+
+## Open url
+driver.get("URL")
+
+
+# method to get the downloaded file name
+def getDownLoadedFileName(waitTime):
+    driver.execute_script("window.open()")
+    # switch to new tab
+    driver.switch_to.window(driver.window_handles[0]) # window_handles refer to current window, if set -1 it will return to previous window, and if set 1 it will take user to next window
+    # navigate to chrome downloads
+    driver.get('chrome://downloads')
+    # define the endTime
+    endTime = time.time()+waitTime
+    while True:
+        try:
+            # get downloaded percentage
+            downloadPercentage = driver.execute_script(
+                "return document.querySelector('downloads-manager').shadowRoot.querySelector('#downloadsList downloads-item').shadowRoot.querySelector('#progress').value")
+            # check if downloadPercentage is 100 (otherwise the script will keep waiting)
+            if downloadPercentage == 100:
+                # return the file name once the download is completed
+                return driver.execute_script("return document.querySelector('downloads-manager').shadowRoot.querySelector('#downloadsList downloads-item').shadowRoot.querySelector('div#content  #file-link').text")
+        except:
+            pass
+        time.sleep(1)
+        if time.time() > endTime:
+            break
+
+# click on download link
+driver.get('URL of the page where you wish to download the file')
+driver.find_element_by_xpath("//input[@id='export']").click()
+ # get the downloaded file name
+latestDownloadedFileName = getDownLoadedFileName(10) #waiting 10 secs to complete the download
+print(latestDownloadedFileName)
+
+driver.back()
+
+
+upload_file = driver.find_element_by_id("importfile")
+driver.execute_script("arguments[0].style.display = 'block';", upload_file)
+#send the file name using keys 
+upload_file.send_keys("default path where files are been downloaded"+ latestDownloadedFileName +"") #path = C:\\Users\\desktop\\folder1\\
+
+
+
+
+
